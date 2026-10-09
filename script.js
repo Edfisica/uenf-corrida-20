@@ -613,19 +613,23 @@ function tocarBuzina(contexto, quando, forte = false) {
   const ganho = contexto.createGain();
   const agora = quando;
 
-  osc.type = forte ? "sawtooth" : "sine";
-  osc.frequency.setValueAtTime(forte ? 220 : 660, agora);
-  if (forte) osc.frequency.exponentialRampToValueAtTime(115, agora + 0.45);
+  // Sinal limpo e agudo: removemos a onda sawtooth e a queda de frequência
+  // que davam ao alerta forte o som grave e rouco.
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(forte ? 880 : 740, agora);
 
-  const volume = forte ? 0.30 : 0.075;
+  // Avisos prévios discretos; sinal de transição mais audível, sem saturar o áudio.
+  const volume = forte ? 0.55 : 0.16;
+  const duracao = forte ? 0.32 : 0.14;
   ganho.gain.setValueAtTime(0.0001, agora);
-  ganho.gain.exponentialRampToValueAtTime(volume, agora + 0.02);
-  ganho.gain.exponentialRampToValueAtTime(0.0001, agora + (forte ? 0.55 : 0.12));
+  ganho.gain.exponentialRampToValueAtTime(volume, agora + 0.012);
+  ganho.gain.setValueAtTime(volume, agora + duracao * 0.65);
+  ganho.gain.exponentialRampToValueAtTime(0.0001, agora + duracao);
 
   osc.connect(ganho);
   ganho.connect(contexto.destination);
   osc.start(agora);
-  osc.stop(agora + (forte ? 0.6 : 0.14));
+  osc.stop(agora + duracao + 0.02);
 }
 
 function cancelarAvisosAudio() {
